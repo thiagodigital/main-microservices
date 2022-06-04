@@ -1,46 +1,45 @@
 version: '3'
 
 services:
-  db:
-    container_name: mysql
-    image: mysql:8
-    restart: always
-    ports:
-      - '33066:3306'
-    environment:
-      MYSQL_DATABASE: ${SERVICE_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
+  auth:
+    container_name: auth
+    build:
+      args:
+        user: ${AUTH_USER}
+        uid: 1000
+      context: images/php
+      dockerfile: Dockerfile
     volumes:
-      - './.docker/mysql/${SERVICE_NAME}:/var/lib/mysql'
+      - ./${AUTH_PATH}:/var/www/html
+    working_dir: /var/www/html
+    command: php-fpm
+    links:
+      - db:db
+    ports:
+      - '${AUTH_PORT}:9000'
+    depends_on:
+      - db
 
   nginx:
     container_name: nginx
     build: images/nginx
     command: nginx -g "daemon off;"
     links:
-      - php
+      - auth
     ports:
-      - '8080:80'
+      - '${NGINX_PORT}:80'
     depends_on:
       - db
 
-  php:
-    container_name: php
-    build:
-      args:
-        user: ${USERNAME}
-        uid: 1000
-      context: images/php
-      dockerfile: Dockerfile
-    volumes:
-      - ./${SERVICE_NAME}:/var/www/html
-    working_dir: /var/www/html
-    command: php-fpm
-    links:
-      - db:db
+  db:
+    container_name: mysql
+    image: mysql:8
+    restart: always
     ports:
-      - '9000:9000'
-    depends_on:
-      - db
+      - '${DB_PORT}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+    volumes:
+      - './.docker/mysql/database:/var/lib/mysql'
