@@ -1,33 +1,8 @@
 version: '3'
 
 services:
-  db:
-    container_name: mysql
-    image: mysql:8
-    restart: always
-    ports:
-      - '33066:3306'
-    environment:
-      MYSQL_DATABASE: ${SERVICE_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-    volumes:
-      - './.docker/mysql/${SERVICE_NAME}:/var/lib/mysql'
-
-  nginx:
-    container_name: nginx
-    build: images/nginx
-    command: nginx -g "daemon off;"
-    links:
-      - php
-    ports:
-      - '8080:80'
-    depends_on:
-      - db
-
-  php:
-    container_name: php
+  auth-service:
+    container_name: auth-service
     build:
       args:
         user: ${USERNAME}
@@ -44,3 +19,25 @@ services:
       - '9000:9000'
     depends_on:
       - db
+
+  nginx:
+    container_name: nginx
+    build: images/nginx
+    command: nginx -g "daemon off;"
+    links:
+      - auth-service
+    ports:
+      - '8080:80'
+    depends_on:
+      - db
+
+  db:
+    container_name: mysql
+    image: mysql:8
+    restart: always
+    ports:
+      - '33066:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - './.docker/mysql/data:/var/lib/mysql'
