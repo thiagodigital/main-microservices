@@ -1,16 +1,16 @@
 version: '3'
 
 services:
-  auth-service:
-    container_name: auth-service
+  api-service:
+    container_name: api-service
     build:
       args:
-        user: ${USERNAME}
+        user: thiago
         uid: 1000
       context: images/php
       dockerfile: Dockerfile
     volumes:
-      - ./${SERVICE_NAME}:/var/www/html
+      - ./api-service:/var/www/html
     working_dir: /var/www/html
     command: php-fpm
     links:
@@ -25,9 +25,9 @@ services:
     build: images/nginx
     command: nginx -g "daemon off;"
     links:
-      - auth-service
+      - api-service
     ports:
-      - '8080:80'
+      - '8001:80'
     depends_on:
       - db
 
@@ -36,8 +36,8 @@ services:
     image: mysql:8
     restart: always
     ports:
-      - '33066:3306'
+      - '33067:3306'
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: password
     volumes:
-      - './.docker/mysql/data:/var/lib/mysql'
+      - './.docker/mysql:/var/lib/mysql'
